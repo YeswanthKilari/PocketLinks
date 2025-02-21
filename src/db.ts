@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { model, Schema } from "mongoose";
 import { z } from "zod";
 
-mongoose.connect("mongodb+srv://bunny:Iamyash@cluster0.ulb7n.mongodb.net/Brainly").then(() => {
+mongoose.connect("//mongourl").then(() => {
     console.log("Connected to MongoDB");
 }).catch((err) => {
     console.error("Error connecting to MongoDB:", err);
