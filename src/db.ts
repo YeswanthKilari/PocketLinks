@@ -1,8 +1,13 @@
 import mongoose from "mongoose";
 import { model, Schema } from "mongoose";
-import { z } from "zod";
+import { string, z } from "zod";
+import { mongodb } from "./config";
 
+<<<<<<< HEAD
 mongoose.connect("//mongourl").then(() => {
+=======
+mongoose.connect(mongodb).then(() => {
+>>>>>>> 44e1ee8 (added content and middleware)
     console.log("Connected to MongoDB");
 }).catch((err) => {
     console.error("Error connecting to MongoDB:", err);
@@ -23,3 +28,17 @@ const signSchema = z.object({
 });
 
 export const signupschema = signSchema;
+<<<<<<< HEAD
+=======
+
+
+const ContentSchema = new Schema({
+    title: String,
+    link: String,
+    tags: [{ type: mongoose.Types.ObjectId, ref: 'Tag' }],
+    userid: { type: mongoose.Types.ObjectId, ref: "User", required: true}
+
+})
+
+export const  ContentModel = model("content", ContentSchema);
+>>>>>>> 44e1ee8 (added content and middleware)
