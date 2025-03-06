@@ -1,9 +1,10 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { ContentModel, signupschema, UserModel } from "./db";
+import { ContentModel, signupschema, UserModel,linkModel } from "./db";
 import { z } from "zod";
 import { userMiddleware } from "./Middleware";
+import { random } from "./util";
 
 const JWT_SECRET = "iamyash";
 
@@ -79,7 +80,6 @@ app.post("/api/v1/signin", async (req, res) => {
   }
 });
 
-
 app.use(userMiddleware);
 app.post("/api/v1/content", async (req, res): Promise<void> => {
   try {
@@ -105,33 +105,80 @@ app.post("/api/v1/content", async (req, res): Promise<void> => {
   }
 });
 
+app.get("/api/v1/content", async (req, res) => {
+  //@ts-ignore
+  const user = req.user;
+  const content = await ContentModel.find({
+    userid: user.id,
+  }).populate("userid", "username");
+  res.json({ content });
+});
 
+app.delete("/api/v1/content", async (req, res) => {
+  const contentid = req.body.contentid;
+  //@ts-ignore
+  await ContentModel.deleteMany({ contentid, userid: req.userid });
+  res.json({ message: "Content deleted successfully" });
+});
 
-app.get("/api/v1/content",async (req, res) => {
+app.post("/api/v1/brain/share", async (req, res) => {
+  try {
+    const { share } = req.body;
     //@ts-ignore
     const user = req.user;
-    const content = await ContentModel.find({
-        userid: user.id
-    }).populate("userid" , "username")
-    res.json({ content });
- 
+    if (share) {
+      const existinguser = await linkModel.findOne({
+        userId: user.id,
+      })
+      if (existinguser) {
+        res.json({
+          hash:existinguser.hash,
+        })
+
+        return;
+      }
+      const hash = random(10)
+      await linkModel.create({
+        userId: user.id,
+        hash: hash
+      });
+      res.json({ message: "/share/"+hash});
+    } else {
+      await linkModel.deleteOne({
+        userId: user.id,
+      });
+      res.json({ message: "Link sharing disabled" });
+    }
+  } catch (e: any) {
+    res.status(500).json({ message: e.message})
+  }
 });
 
-app.delete("/api/v1/content",async (req, res) => {
-    const contentid = req.body.contentid;
-    //@ts-ignore
-    await ContentModel.deleteMany({ contentid, userid: req.userid });
-    res.json({ message: "Content deleted successfully" });
+app.get("/api/v1/brain/:sharelink", async (req, res) => {
+  const hash = req.params.sharelink;
+  let link = await linkModel.findOne({
+    hash,
+  });
+
+  if (!link) {
+    res.status(404).json({ message: "Link not found" });
+    return;
+  }
+
+  let content = await ContentModel.find({
+    userid: link.userId,
+  });
+
+  let user = await UserModel.findOne({
+    _id: link.userId,
+  });
+
+  res.json({
+    username: user?.username,
+    content: content,
+  });
 });
 
-app.post("/api/v1/brain/share", (req, res) => {
-
-});
-
-app.get("/api/v1/brain/:sharelink", (req, res) => {
- 
-});
-
-app.listen(3000, () => {
+app.listen(4000, () => {
   console.log("Server is running on port 3000");
 });

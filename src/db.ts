@@ -27,11 +27,22 @@ export const signupschema = signSchema;
 
 
 const ContentSchema = new Schema({
-    title: String,
-    link: String,
-    tags: [{ type: mongoose.Types.ObjectId, ref: 'Tag' }],
-    userid: { type: mongoose.Types.ObjectId, ref: "User", required: true}
+  title: { type: String, required: true },
+  link: { type: String, required: true },
+  tags: [{ type: mongoose.Types.ObjectId, ref: "Tag" }],
+  userid: { type: mongoose.Types.ObjectId, ref: "User", required: true },
+});
 
-})
+export const ContentModel = model("content", ContentSchema);
 
-export const  ContentModel = model("content", ContentSchema);
+const linkSchema = new Schema({
+  hash: String,
+  userId: {
+    type: mongoose.Types.ObjectId,
+    ref: "User",
+    required: true,
+    unique: true,
+  },
+});
+
+export const linkModel = model("link", linkSchema);
