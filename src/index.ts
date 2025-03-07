@@ -33,12 +33,8 @@ app.post("/api/v1/signup", async (req, res) => {
         message: "Validation error",
         errors: e.errors,
       });
-    } else if (e.code === 11000) {
-      res.status(400).json({
-        message: "Duplicate key error",
-        error: e.keyValue,
-      });
-    } else {
+    } 
+    else {
       res.status(500).json({
         message: "Internal server error",
       });
