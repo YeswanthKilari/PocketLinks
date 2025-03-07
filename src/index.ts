@@ -1,14 +1,16 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { ContentModel, signupschema, UserModel,linkModel } from "./db";
+import { ContentModel, signupschema, UserModel, linkModel } from "./db";
 import { z } from "zod";
 import { userMiddleware } from "./Middleware";
 import { random } from "./util";
+import cors from "cors";
 
 const JWT_SECRET = "iamyash";
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 app.post("/api/v1/signup", async (req, res) => {
@@ -25,10 +27,16 @@ app.post("/api/v1/signup", async (req, res) => {
       message: "user signed up",
     });
   } catch (e) {
+    console.error("Error during signup:", e);
     if (e instanceof z.ZodError) {
       res.status(400).json({
         message: "Validation error",
         errors: e.errors,
+      });
+    } else if (e.code === 11000) {
+      res.status(400).json({
+        message: "Duplicate key error",
+        error: e.keyValue,
       });
     } else {
       res.status(500).json({
@@ -129,20 +137,20 @@ app.post("/api/v1/brain/share", async (req, res) => {
     if (share) {
       const existinguser = await linkModel.findOne({
         userId: user.id,
-      })
+      });
       if (existinguser) {
         res.json({
-          hash:existinguser.hash,
-        })
+          hash: existinguser.hash,
+        });
 
         return;
       }
-      const hash = random(10)
+      const hash = random(10);
       await linkModel.create({
         userId: user.id,
-        hash: hash
+        hash: hash,
       });
-      res.json({ message: "/share/"+hash});
+      res.json({ message: "/share/" + hash });
     } else {
       await linkModel.deleteOne({
         userId: user.id,
@@ -150,7 +158,7 @@ app.post("/api/v1/brain/share", async (req, res) => {
       res.json({ message: "Link sharing disabled" });
     }
   } catch (e: any) {
-    res.status(500).json({ message: e.message})
+    res.status(500).json({ message: e.message });
   }
 });
 
@@ -180,5 +188,5 @@ app.get("/api/v1/brain/:sharelink", async (req, res) => {
 });
 
 app.listen(4000, () => {
-  console.log("Server is running on port 3000");
+  console.log("Server is running on port 4000");
 });
