@@ -87,7 +87,7 @@ app.post("/api/v1/signin", async (req, res) => {
 app.use(userMiddleware);
 app.post("/api/v1/content", async (req, res): Promise<void> => {
   try {
-    const { title, link } = req.body;
+    const { title, link, type } = req.body;
 
     if (!(req as any).user || !(req as any).user.id) {
       res.status(401).json({ message: "Unauthorized: User ID missing" });
@@ -97,6 +97,7 @@ app.post("/api/v1/content", async (req, res): Promise<void> => {
     const content = await ContentModel.create({
       title,
       link,
+      type,
       userid: (req as any).user.id,
       tags: [],
     });

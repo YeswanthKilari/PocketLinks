@@ -31,6 +31,7 @@ export const signupschema = signSchema;
 const ContentSchema = new Schema({
   title: { type: String, required: true },
   link: { type: String, required: true },
+  type: { type: String},
   tags: [{ type: mongoose.Types.ObjectId, ref: "Tag" }],
   userid: { type: mongoose.Types.ObjectId, ref: "User", required: true },
 });
