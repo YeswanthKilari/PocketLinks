@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 import { model, Schema } from "mongoose";
 import { z } from "zod";
-import { mongodb } from "./config";
+import { MONGODB_URI } from "./config";
 
 mongoose
-  .connect(mongodb)
+  .connect(MONGODB_URI)
   .then(() => {
     console.log("Connected to MongoDB");
   })
@@ -31,7 +31,7 @@ export const signupschema = signSchema;
 const ContentSchema = new Schema({
   title: { type: String, required: true },
   link: { type: String, required: true },
-  type: { type: String},
+  type: { type: String },
   tags: [{ type: mongoose.Types.ObjectId, ref: "Tag" }],
   userid: { type: mongoose.Types.ObjectId, ref: "User", required: true },
 });
