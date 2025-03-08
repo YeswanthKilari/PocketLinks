@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "./config";
+
+const JWT_SECRET = process.env.JWT_SECRET || "default_secret_key";
 
 interface DecodedToken {
   id: string;
