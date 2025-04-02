@@ -146,30 +146,27 @@ app.delete("/api/v1/content",userMiddleware, async (req, res) => {
       .json({ message: "Internal server error", error: e.message });
   }
 });
-
-app.post("/api/v1/brain/share",userMiddleware, async (req, res) => {
+app.post("/api/v1/brain/share", userMiddleware, async (req, res) => {
   try {
     console.log("Share request received");
     const { share } = req.body;
     //@ts-ignore
     const user = req.user;
     if (share) {
+      let hash = random(10);
       const existinguser = await linkModel.findOne({
         userId: user.id,
       });
-      if (existinguser) {
-        res.json({
-          hash: existinguser.hash,
+      if (existinguser && existinguser.hash) {
+        hash = existinguser.hash;
+      } else {
+        await linkModel.create({
+          userId: user.id,
+          hash: hash,
         });
-
-        return;
       }
-      const hash = random(10);
-      await linkModel.create({
-        userId: user.id,
-        hash: hash,
-      });
-      res.json({ message: "/share/" + hash });
+      const fullShareLink = `/share/${hash}`; 
+      res.json({ message: fullShareLink }); 
     } else {
       await linkModel.deleteOne({
         userId: user.id,
