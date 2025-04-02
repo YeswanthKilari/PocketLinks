@@ -1,8 +1,8 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { ContentModel, signupschema, UserModel, linkModel } from "./db";
-import { z } from "zod";
+import { ContentModel, Signupschema, UserModel, linkModel } from "./db";
+import { any, z } from "zod";
 import { userMiddleware } from "./Middleware";
 import { random } from "./util";
 import cors from "cors";
@@ -15,7 +15,8 @@ app.use(express.json());
 
 app.post("/api/v1/signup", async (req, res) => {
   try {
-    const { username, password, email } = signupschema.parse(req.body);
+    console.log("Signup request received");
+    const { username, password, email } = Signupschema.parse(req.body);
     const hashedPassword = await bcrypt.hash(password, 10);
     await UserModel.create({
       username,
@@ -26,16 +27,16 @@ app.post("/api/v1/signup", async (req, res) => {
     res.json({
       message: "user signed up",
     });
-  } catch (e) {
+  } catch (e:any) {
     console.error("Error during signup:", e);
     if (e instanceof z.ZodError) {
       res.status(400).json({
         message: "Validation error",
         errors: e.errors,
       });
-    } 
-    else {
+    } else {
       res.status(500).json({
+        errors: e.errors,
         message: "Internal server error",
       });
     }
@@ -44,7 +45,8 @@ app.post("/api/v1/signup", async (req, res) => {
 
 app.post("/api/v1/signin", async (req, res) => {
   try {
-    const { username, password, email } = signupschema.parse(req.body);
+    console.log("Signin request received");
+    const { username, password, email } = Signupschema.parse(req.body);
 
     const existinguser = await UserModel.findOne({
       username,
@@ -78,15 +80,17 @@ app.post("/api/v1/signin", async (req, res) => {
       });
     }
   } catch (e) {
+    console.error("Error during signin:", e);
     res.status(400).json({
       message: "Invalid credentials",
     });
   }
 });
 
-app.use(userMiddleware);
-app.post("/api/v1/content", async (req, res): Promise<void> => {
+// app.use(userMiddleware);
+app.post("/api/v1/content",userMiddleware, async (req, res): Promise<void> => {
   try {
+    console.log("Content creation request received");
     const { title, link, type } = req.body;
 
     if (!(req as any).user || !(req as any).user.id) {
@@ -104,30 +108,48 @@ app.post("/api/v1/content", async (req, res): Promise<void> => {
 
     res.json({ message: "Content created successfully", content });
   } catch (e: any) {
+    console.error("Error during content creation:", e);
     res
       .status(500)
       .json({ message: "Internal server error", error: e.message });
   }
 });
 
-app.get("/api/v1/content", async (req, res) => {
-  //@ts-ignore
-  const user = req.user;
-  const content = await ContentModel.find({
-    userid: user.id,
-  }).populate("userid", "username");
-  res.json({ content });
-});
-
-app.delete("/api/v1/content", async (req, res) => {
-  const contentid = req.body.contentid;
-  //@ts-ignore
-  await ContentModel.deleteMany({ contentid, userid: req.userid });
-  res.json({ message: "Content deleted successfully" });
-});
-
-app.post("/api/v1/brain/share", async (req, res) => {
+app.get("/api/v1/content",userMiddleware, async (req, res) => {
   try {
+    console.log("Content retrieval request received");
+    //@ts-ignore
+    const user = req.user;
+    const content = await ContentModel.find({
+      userid: user.id,
+    }).populate("userid", "username");
+    res.json({ content });
+  } catch (e: any) {
+    console.error("Error during content retrieval:", e);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: e.message });
+  }
+});
+
+app.delete("/api/v1/content",userMiddleware, async (req, res) => {
+  try {
+    console.log("Content deletion request received");
+    const contentid = req.body.contentid;
+    //@ts-ignore
+    await ContentModel.deleteMany({ contentid, userid: req.userid });
+    res.json({ message: "Content deleted successfully" });
+  } catch (e: any) {
+    console.error("Error during content deletion:", e);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: e.message });
+  }
+});
+
+app.post("/api/v1/brain/share",userMiddleware, async (req, res) => {
+  try {
+    console.log("Share request received");
     const { share } = req.body;
     //@ts-ignore
     const user = req.user;
@@ -155,33 +177,42 @@ app.post("/api/v1/brain/share", async (req, res) => {
       res.json({ message: "Link sharing disabled" });
     }
   } catch (e: any) {
+    console.error("Error during share request:", e);
     res.status(500).json({ message: e.message });
   }
 });
 
-app.get("/api/v1/brain/:sharelink", async (req, res) => {
-  const hash = req.params.sharelink;
-  let link = await linkModel.findOne({
-    hash,
-  });
+app.get("/api/v1/brain/:sharelink",userMiddleware, async (req, res) => {
+  try {
+    console.log("Share link retrieval request received");
+    const hash = req.params.sharelink;
+    let link = await linkModel.findOne({
+      hash,
+    });
 
-  if (!link) {
-    res.status(404).json({ message: "Link not found" });
-    return;
+    if (!link) {
+      res.status(404).json({ message: "Link not found" });
+      return;
+    }
+
+    let content = await ContentModel.find({
+      userid: link.userId,
+    });
+
+    let user = await UserModel.findOne({
+      _id: link.userId,
+    });
+
+    res.json({
+      username: user?.username,
+      content: content,
+    });
+  } catch (e: any) {
+    console.error("Error during share link retrieval:", e);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: e.message });
   }
-
-  let content = await ContentModel.find({
-    userid: link.userId,
-  });
-
-  let user = await UserModel.findOne({
-    _id: link.userId,
-  });
-
-  res.json({
-    username: user?.username,
-    content: content,
-  });
 });
 
 app.listen(4000, () => {

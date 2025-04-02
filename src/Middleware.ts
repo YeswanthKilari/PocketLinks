@@ -7,12 +7,19 @@ interface DecodedToken {
   id: string;
 }
 
+const PUBLIC_ROUTES = ["/api/v1/signin", "/api/v1/signup"];
+
 export const userMiddleware = (
   req: Request,
   res: Response,
   next: NextFunction
 ): void => {
   try {
+    // Skip middleware for public routes
+    if (PUBLIC_ROUTES.includes(req.path)) {
+      return next();
+    }
+
     const header = req.headers["authorization"];
 
     if (!header) {

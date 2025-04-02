@@ -31,7 +31,7 @@ const signSchema = z.object({
   email: z.string().email("Email is not valid"),
 });
 
-export const signupschema = signSchema;
+export const Signupschema = signSchema;
 
 const ContentSchema = new Schema({
   title: { type: String, required: true },
