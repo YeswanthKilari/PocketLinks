@@ -212,6 +212,6 @@ app.get("/api/v1/brain/:sharelink",userMiddleware, async (req, res) => {
   }
 });
 
-app.listen(4000, () => {
-  console.log("Server is running on port 4000");
+app.listen(3000, () => {
+  console.log("Server is running on port 3000");
 });
