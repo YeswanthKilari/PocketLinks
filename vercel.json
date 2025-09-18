@@ -5,14 +5,18 @@
       "src": "src/index.ts",
       "use": "@vercel/node",
       "config": {
-        "maxDuration": 10
+        "maxDuration": 30
       }
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/api/(.*)",
       "dest": "/src/index.ts"
     }
-  ]
+  ],
+  "env": {
+    "MONGODB_URI": "@mongodb_uri",
+    "JWT_SECRET": "@jwt_secret"
+  }
 }
