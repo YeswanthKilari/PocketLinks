@@ -43,6 +43,10 @@ app.post("/api/v1/signup", async (req, res) => {
   }
 });
 
+app.get("/health", (req, res) => {
+  res.send("OK");
+});
+
 app.post("/api/v1/signin", async (req, res) => {
   try {
     console.log("Signin request received");
